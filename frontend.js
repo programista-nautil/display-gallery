@@ -1,15 +1,10 @@
-// =========ZMIANA: Dostosowanie frontendu do nowego, scentralizowanego API =========
-
-// ========= KONFIGURACJA GALERII =========
 // ID tej konkretnej galerii (z pliku galleries.config.json na serwerze)
 const GALLERY_ID = 'parafia'
 
 // Adres URL Twojego serwera API. Do testów na localhost:
 const API_BASE_URL = 'https://galeria-api.nautil2.hekko24.pl'
 
-// Docelowo, po wdrożeniu backendu na serwer produkcyjny, zmienisz go na:
-// const API_BASE_URL = 'https://twoj-serwer-produkcyjny.com';
-// =======================================
+const SHOW_DATES_IN_ALBUM_TITLES = false
 
 function goBack() {
 	loadAlbums()
@@ -33,7 +28,9 @@ function loadAlbums() {
 			let html = ''
 			if (data && data.length > 0) {
 				data.forEach(folder => {
-					const displayName = folder.name.replace(/^\d{4}-\d{2}-\d{2}\s/, '')
+					const displayName = SHOW_DATES_IN_ALBUM_TITLES
+						? folder.name // Jeśli flaga to true, użyj pełnej nazwy
+						: folder.name.replace(/^\d{4}-\d{2}-\d{2}\s/, '') // Jeśli false, usuń datę
 					const coverUrl = folder.coverUrl || 'https://via.placeholder.com/400x300.png?text=Pusty+Album'
 					html += `
                         <div class="album" onclick="loadPhotos('${folder.id}')">
