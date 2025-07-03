@@ -117,8 +117,6 @@ app.get('/api/:galleryId/folders', loadGalleryConfig, async (req, res) => {
 
 app.get('/api/:galleryId/folder/:folderId', loadGalleryConfig, async (req, res) => {
 	const { folderId } = req.params
-	const { name: galleryName } = req.galleryConfig
-	log('info', `[${galleryName}] Rozpoczęto pobieranie zdjęć dla albumu o ID: ${folderId}`)
 
 	try {
 		const response = await drive.files.list({
@@ -132,24 +130,14 @@ app.get('/api/:galleryId/folder/:folderId', loadGalleryConfig, async (req, res) 
 			.map(file => ({
 				id: file.id,
 				filename: file.name,
-				// POPRAWKA: Używamy prawidłowego, publicznego linku do osadzania, który zawsze działa
-				url: `https://drive.google.com/uc?export=view&id=${file.id}`,
+				url: `https://lh3.googleusercontent.com/d/${file.id}`,
 				width: file.imageMediaMetadata.width || 1200,
 				height: file.imageMediaMetadata.height || 800,
 			}))
 			.reverse()
 
-		log(
-			'info',
-			`[${galleryName}] Pomyślnie pobrano i przetworzono ${photos.length} zdjęć z albumu ${folderId}. Wysyłam odpowiedź.`
-		)
 		res.json({ photos })
 	} catch (error) {
-		log(
-			'error',
-			`[${galleryName}] Wystąpił błąd w endpoincie /folder/${folderId}:`,
-			error.response ? error.response.data : error.message
-		)
 		res.status(500).send('Błąd serwera podczas pobierania zdjęć.')
 	}
 })
