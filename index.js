@@ -9,6 +9,12 @@ const app = express()
 const GALLERIES_CONFIG_PATH = './galleries.config.json'
 const MASTER_FOLDER_ID = process.env.MASTER_GALLERY_FOLDER_ID
 
+const log = (level, message, data = '') => {
+	const timestamp = new Date().toLocaleString('pl-PL')
+	const logFunc = console[level.toLowerCase()] || console.log
+	logFunc(`[${timestamp}] [${level.toUpperCase()}] ${message}`, data)
+}
+
 // Wczytujemy konfigurację galerii
 let galleriesConfig
 try {
