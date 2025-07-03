@@ -1,0 +1,10 @@
+{
+	"kultura": {
+		"clientFolderName": "Kultura Kosakowo",
+		"allowedOrigin": "https://kulturakosakowo.pl"
+	},
+	"parafia": {
+		"clientFolderName": "Parafia",
+		"allowedOrigin": "https://www.parafia.kosakowo.com"
+	}
+}
