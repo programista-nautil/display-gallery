@@ -1,15 +1,3 @@
-process.on('unhandledRejection', (reason, promise) => {
-	console.error('KRYTYCZNY BŁĄD: Niewychwycony błąd Promise:', reason)
-	// Zakończ proces z błędem, aby PM2 wiedział, że coś poszło nie tak
-	process.exit(1)
-})
-
-process.on('uncaughtException', (err, origin) => {
-	console.error(`KRYTYCZNY BŁĄD: Niewychwycony wyjątek: ${err}`, `Origin: ${origin}`)
-	// Zakończ proces z błędem
-	process.exit(1)
-})
-
 const express = require('express')
 const { google } = require('googleapis')
 const fs = require('fs')
