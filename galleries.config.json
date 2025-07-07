@@ -1,7 +1,7 @@
 {
 	"kultura": {
 		"clientFolderName": "Muzeum",
-		"allowedOrigin": "https://kulturakosakowo.pl/"
+		"allowedOrigin": "https://kulturakosakowo.pl"
 	},
 	"parafia": {
 		"clientFolderName": "Parafia",

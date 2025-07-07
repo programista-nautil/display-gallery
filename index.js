@@ -92,13 +92,34 @@ app.get('/api/:galleryId/folders', loadGalleryConfig, async (req, res) => {
 		const albumsWithCovers = await Promise.all(
 			albums.map(async album => {
 				try {
+					// Krok 1: Pobieramy WSZYSTKIE zdjęcia z albumu i ich NAZWY
 					const imagesResponse = await drive.files.list({
 						q: `'${album.id}' in parents and mimeType contains 'image/' and trashed = false`,
-						fields: 'files(thumbnailLink)',
+						// Usuwamy pageSize: 1, prosimy o nazwę i miniaturę
+						fields: 'files(name, thumbnailLink)',
 					})
-					const firstImage = imagesResponse.data.files[0]
-					const coverUrl = firstImage ? firstImage.thumbnailLink.replace(/=s\d+$/, '=w400') : null
-					return { id: album.id, name: album.name, coverUrl }
+
+					let finalCoverUrl = null
+
+					if (imagesResponse.data.files && imagesResponse.data.files.length > 0) {
+						const allPhotos = imagesResponse.data.files
+
+						// Krok 2: Szukamy zdjęcia z "_cover" w nazwie
+						const coverPhoto = allPhotos.find(photo => photo.name && photo.name.includes('_cover'))
+
+						if (coverPhoto) {
+							// Jeśli jest, używamy jego miniatury
+							finalCoverUrl = coverPhoto.thumbnailLink
+						} else {
+							// Jeśli nie ma, bierzemy pierwsze z listy
+							finalCoverUrl = allPhotos[0].thumbnailLink
+						}
+					}
+
+					// Zmieniamy rozmiar miniatury dla lepszej jakości
+					const sizedCoverUrl = finalCoverUrl ? finalCoverUrl.replace(/=s\d+$/, '=w400') : null
+
+					return { id: album.id, name: album.name, coverUrl: sizedCoverUrl }
 				} catch (e) {
 					console.error(`Błąd pobierania okładki dla albumu ${album.name}:`, e.message)
 					return { id: album.id, name: album.name, coverUrl: null }
