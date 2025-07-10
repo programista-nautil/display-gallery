@@ -6,5 +6,13 @@
 	"parafia": {
 		"clientFolderName": "Parafia",
 		"allowedOrigin": "https://www.parafia.kosakowo.com"
+	},
+	"a11y": {
+		"clientFolderName": "A11y",
+		"allowedOrigin": "https://a11y.org.pl"
+	},
+	"aktywne": {
+		"clientFolderName": "Aktywne",
+		"allowedOrigin": "https://aktywnekosakowo.pl"
 	}
 }
