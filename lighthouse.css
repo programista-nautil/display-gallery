@@ -1,0 +1,274 @@
+/* Dodaj swój kod CSS tutaj.
+                     
+Na przykład:
+.przyklad {
+    color: red;
+}
+
+Sprawdź poniższą stronę, jeśli chcesz poszerzyć swoją wiedzę nt. CSS:
+http://www.w3schools.com/css/css_syntax.asp
+
+Koniec komentarza */
+
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+.gallery {
+	margin: 0 auto;
+	width: 100%;
+	transition: opacity 0.4s ease-in-out;
+}
+
+.gallery.is-loading {
+	opacity: 0; /* Całkowicie przezroczyste */
+	visibility: hidden; /* Ukryte, ale nadal zajmuje miejsce w układzie, co jest ważne dla Masonry */
+}
+
+.gallery.gallery-photos a {
+	display: block;
+	margin-bottom: 10px;
+	overflow: hidden; /* Ważne, aby utrzymać kształt przy transformacjach */
+
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); /* Subtelny cień dla zdjęcia */
+	transition: transform 0.3s ease, box-shadow 0.3s ease; /* Płynne animacje */
+
+	/* ---- Szerokości responsywne pozostają bez zmian ---- */
+	width: 98%;
+}
+.gallery.gallery-photos a:hover {
+	transform: translateY(-5px); /* Uniesienie identyczne jak przy albumach */
+	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); /* Mocniejszy cień po najechaniu */
+}
+
+/* Media queries dla szerokości pozostają bez zmian */
+@media (min-width: 576px) {
+	.gallery.gallery-photos a {
+		width: 48%;
+	}
+}
+@media (min-width: 768px) {
+	.gallery.gallery-photos a {
+		width: 32%;
+	}
+}
+@media (min-width: 1024px) {
+	.gallery.gallery-photos a {
+		width: 24%;
+	}
+}
+
+.gallery.gallery-photos a img {
+	width: 100%;
+	height: auto;
+	display: block;
+	border-radius: 4px; /* Lżejsze zaokrąglenie wewnątrz ramki */
+
+	/* Przenosimy animację transform na rodzica (<a>), więc tutaj ją resetujemy */
+	transition: none;
+}
+
+/* Usuwamy efekt hover z samego obrazka, bo jest on teraz na całej ramce */
+.gallery.gallery-photos a img:hover {
+	transform: none;
+}
+
+/* === Style dla siatki albumów === */
+.gallery.gallery-albums {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 25px;
+	padding: 20px 0;
+}
+
+.album {
+	width: 320px;
+	display: flex;
+	flex-direction: column;
+	cursor: pointer;
+	background-color: transparent;
+	box-shadow: none;
+	border-radius: 0;
+	overflow: visible;
+}
+
+.album:hover {
+	transform: none;
+	box-shadow: none;
+}
+
+.album .cover {
+	width: 100%;
+	height: 220px;
+	object-fit: cover;
+	display: block;
+	border-radius: 8px;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+	transition: transform 0.3s ease, box-shadow 0.3s ease; /* Lokalna animacja */
+}
+
+.album:hover .cover {
+	transform: translateY(-5px);
+	box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.album .title {
+	background-color: transparent;
+	color: #333;
+	font-size: 16px;
+	font-family: inherit;
+	text-align: center;
+	padding: 15px 10px;
+	font-weight: normal;
+	min-height: auto;
+	display: block;
+}
+
+.back-button {
+	/* Używamy inline-flex, aby przycisk naturalnie układał się po lewej */
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px; /* Odstęp między ikoną a tekstem */
+
+	/* Pozycjonowanie */
+	margin: 20px 0 40px 0;
+
+	/* STYL "OUTLINE" */
+	background-color: transparent; /* Przezroczyste tło */
+	color: #15416e; /* Ciemnoniebieski tekst */
+	font-weight: 700; /* Pogrubiona czcionka */
+	font-size: 16px;
+	border: 2px solid #15416e; /* Ciemnoniebieska ramka */
+	border-radius: 50px; /* Pełne zaokrąglenie (kształt pigułki) */
+	padding: 10px 24px;
+	cursor: pointer;
+	text-decoration: none;
+	text-transform: uppercase; /* Wielkie litery */
+	letter-spacing: 0.5px;
+
+	/* Płynne przejścia dla wszystkich animowanych właściwości */
+	transition: background-color 0.25s ease-in-out, color 0.25s ease-in-out;
+}
+
+.back-button:hover {
+	background-color: #15416e; /* Tło staje się ciemnoniebieskie */
+	color: #ffffff; /* Tekst staje się biały */
+}
+
+/* Ikona strzałki */
+.back-button::before {
+	content: '';
+	display: block;
+	width: 7px;
+	height: 7px;
+	border-left: 2px solid #15416e; /* Kolor strzałki pasuje do tekstu */
+	border-bottom: 2px solid #15416e;
+	transform: rotate(45deg);
+	transition: border-color 0.25s ease-in-out; /* Animacja zmiany koloru strzałki */
+}
+
+/* Ikona strzałki po najechaniu myszką */
+.back-button:hover::before {
+	border-color: #ffffff; /* Strzałka staje się biała */
+}
+
+body:not(.lg-from-hash) .lg-outer.lg-start-zoom .lg-item.lg-complete .lg-object {
+	width: 70% !important;
+}
+
+#spinner {
+	position: fixed;
+	z-index: 9999;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%; /* Ustawienie na środek od lewej do prawej */
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	background: rgba(255, 255, 255, 0.8);
+}
+
+.lds-ring {
+	position: fixed;
+	z-index: 9999;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 80px;
+	height: 80px;
+}
+.lds-ring div {
+	box-sizing: border-box;
+	display: block;
+	position: absolute;
+	width: 64px;
+	height: 64px;
+	margin: 8px;
+	border: 8px solid #000;
+	border-radius: 50%;
+	animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+	border-color: #15416e transparent transparent transparent;
+}
+.lds-ring div:nth-child(1) {
+	animation-delay: -0.45s;
+}
+.lds-ring div:nth-child(2) {
+	animation-delay: -0.3s;
+}
+.lds-ring div:nth-child(3) {
+	animation-delay: -0.15s;
+}
+@keyframes lds-ring {
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+
+/* --- Układ: 'default' (domyślny, mniejsze kafelki) --- */
+.gallery.default .album {
+	width: 320px;
+}
+.gallery.default.gallery-photos a {
+	width: 98%;
+}
+@media (min-width: 576px) {
+	.gallery.default.gallery-photos a {
+		width: 48%;
+	}
+} /* 2 kolumny */
+@media (min-width: 768px) {
+	.gallery.default.gallery-photos a {
+		width: 32%;
+	}
+} /* 3 kolumny */
+@media (min-width: 1024px) {
+	.gallery.default.gallery-photos a {
+		width: 24%;
+	}
+} /* 4 kolumny */
+
+/* --- Układ: 'large-tiles' (większe kafelki) --- */
+.gallery.large-tiles .album {
+	width: 380px;
+} /* Większe kafelki albumów */
+.gallery.large-tiles.gallery-photos a {
+	width: 98%;
+}
+@media (min-width: 768px) {
+	.gallery.large-tiles.gallery-photos a {
+		width: 48%;
+	}
+} /* 2 kolumny na tablecie */
+@media (min-width: 1024px) {
+	.gallery.large-tiles.gallery-photos a {
+		width: 32%;
+	}
+} /* 3 kolumny na desktopie */

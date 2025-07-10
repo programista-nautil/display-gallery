@@ -14,6 +14,7 @@ const API_BASE_URL = 'https://galeria-api.nautil2.hekko24.pl'
 // Ustaw na `true`, aby pokazać daty w tytułach, lub `false`, aby je ukryć
 const SHOW_DATES_IN_ALBUM_TITLES = false
 
+// default lub large-tiles
 const GALLERY_LAYOUT_STYLE = 'large-tiles'
 // ==========================================================
 
