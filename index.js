@@ -94,7 +94,7 @@ app.get('/api/:galleryId/folders', loadGalleryConfig, async (req, res) => {
 				try {
 					// Krok 1: Pobieramy WSZYSTKIE zdjęcia z albumu i ich NAZWY
 					const imagesResponse = await drive.files.list({
-						q: `'${album.id}' in parents and mimeType contains 'image/' and trashed = false`,
+						q: `'${album.id}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false`,
 						// Usuwamy pageSize: 1, prosimy o nazwę i miniaturę
 						fields: 'files(name, thumbnailLink)',
 					})
@@ -137,28 +137,119 @@ app.get('/api/:galleryId/folders', loadGalleryConfig, async (req, res) => {
 
 app.get('/api/:galleryId/folder/:folderId', loadGalleryConfig, async (req, res) => {
 	const { folderId } = req.params
+	const { name: galleryName } = req.galleryConfig
+	log('info', `[${galleryName}] Rozpoczęto pobieranie mediów dla albumu o ID: ${folderId}`)
 
 	try {
 		const response = await drive.files.list({
-			q: `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`,
-			fields: 'files(id, name, imageMediaMetadata(width,height))',
+			q: `'${folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false`,
+			fields: 'files(id, name, mimeType, thumbnailLink, videoMediaMetadata, imageMediaMetadata(width,height))',
 			pageSize: 1000,
 		})
 
-		const photos = (response.data.files || [])
-			.filter(file => file.imageMediaMetadata)
-			.map(file => ({
-				id: file.id,
-				filename: file.name,
-				url: `https://lh3.googleusercontent.com/d/${file.id}`,
-				width: file.imageMediaMetadata.width || 1200,
-				height: file.imageMediaMetadata.height || 800,
-			}))
+		const media = (response.data.files || [])
+			.filter(file => file.imageMediaMetadata || file.videoMediaMetadata)
+			.map(file => {
+				const isVideo = file.mimeType.startsWith('video')
+				return {
+					id: file.id,
+					filename: file.name,
+					type: isVideo ? 'video' : 'image',
+					// Dla filmów i zdjęć używamy linku do miniatury w siatce
+					thumbnailUrl: file.thumbnailLink ? file.thumbnailLink.replace(/=s\d+$/, '=w400') : null,
+					// Pełny URL będzie budowany na froncie przez proxy
+					width: file.imageMediaMetadata?.width || parseInt(file.videoMediaMetadata?.width, 10) || 1280,
+					height: file.imageMediaMetadata?.height || parseInt(file.videoMediaMetadata?.height, 10) || 720,
+				}
+			})
 			.reverse()
 
-		res.json({ photos })
+		log('info', `[${galleryName}] Pomyślnie pobrano i przetworzono ${media.length} mediów. Wysyłam odpowiedź.`)
+		res.json({ media }) // Zmieniamy nazwę na "media" dla jasności
 	} catch (error) {
-		res.status(500).send('Błąd serwera podczas pobierania zdjęć.')
+		log('error', `[${galleryName}] Wystąpił błąd w endpoincie /folder/${folderId}:`, error.message)
+		res.status(500).send('Błąd serwera podczas pobierania mediów.')
+	}
+})
+
+app.get('/api/:galleryId/image/:fileId', loadGalleryConfig, async (req, res) => {
+	const { fileId } = req.params
+	try {
+		const fileStream = await drive.files.get({ fileId: fileId, alt: 'media' }, { responseType: 'stream' })
+		res.setHeader('Content-Type', 'image/jpeg')
+		fileStream.data.pipe(res)
+	} catch (error) {
+		log('error', `Błąd podczas proxy dla obrazka o ID ${fileId}:`, error.message)
+		res.status(404).send('Nie znaleziono obrazka.')
+	}
+})
+
+app.get('/api/:galleryId/video/:fileId', loadGalleryConfig, async (req, res) => {
+	const { fileId } = req.params
+	const { name: galleryName } = req.galleryConfig
+	log('info', `[${galleryName}] Żądanie streamowania wideo o ID: ${fileId}`)
+
+	try {
+		// Pobierz metadane pliku dla uzyskania typu MIME
+		const fileMetadata = await drive.files.get({
+			fileId: fileId,
+			fields: 'mimeType, size',
+		})
+
+		const mimeType = fileMetadata.data.mimeType || 'video/mp4'
+		const fileSize = parseInt(fileMetadata.data.size, 10)
+
+		// Obsługa range requests dla seeking w filmie
+		const range = req.headers.range
+		if (range && fileSize) {
+			const parts = range.replace(/bytes=/, '').split('-')
+			const start = parseInt(parts[0], 10)
+			const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1
+			const chunksize = end - start + 1
+
+			res.status(206)
+			res.setHeader('Content-Range', `bytes ${start}-${end}/${fileSize}`)
+			res.setHeader('Accept-Ranges', 'bytes')
+			res.setHeader('Content-Length', chunksize)
+			res.setHeader('Content-Type', mimeType)
+
+			// Stream z zakresu
+			const fileStream = await drive.files.get(
+				{
+					fileId: fileId,
+					alt: 'media',
+				},
+				{
+					responseType: 'stream',
+					headers: {
+						Range: `bytes=${start}-${end}`,
+					},
+				}
+			)
+
+			fileStream.data.pipe(res)
+		} else {
+			// Zwykły stream bez range
+			res.setHeader('Content-Type', mimeType)
+			if (fileSize) {
+				res.setHeader('Content-Length', fileSize)
+			}
+
+			const fileStream = await drive.files.get(
+				{
+					fileId: fileId,
+					alt: 'media',
+				},
+				{ responseType: 'stream' }
+			)
+
+			fileStream.data.pipe(res)
+		}
+
+		log('info', `[${galleryName}] Rozpoczęto streaming wideo: ${fileId}`)
+	} catch (error) {
+		log('error', `Błąd podczas streamowania wideo o ID ${fileId}:`, error.message)
+		res.status(500).send('Błąd serwera.')
 	}
 })
 

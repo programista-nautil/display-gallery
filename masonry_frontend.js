@@ -8,11 +8,13 @@
 // ID tej konkretnej galerii (z pliku galleries.config.json na serwerze)
 const GALLERY_ID = 'parafia'
 
+const API_BASE_URL = 'http://localhost:3010'
+
 // Adres URL Twojego serwera API
-const API_BASE_URL = 'https://galeria-api.nautil2.hekko24.pl'
+//const API_BASE_URL = 'https://galeria-api.nautil2.hekko24.pl'
 
 // Ustaw na `true`, aby pokazać daty w tytułach, lub `false`, aby je ukryć
-const SHOW_DATES_IN_ALBUM_TITLES = false
+const SHOW_DATES_IN_ALBUM_TITLES = true
 
 // default lub large-tiles
 const GALLERY_LAYOUT_STYLE = 'large-tiles'
@@ -116,28 +118,38 @@ function loadPhotos(albumId) {
 		.then(data => {
 			let html = ''
 			let photoSwipeItems = []
-			if (data.photos && data.photos.length > 0) {
-				data.photos.forEach((photo, index) => {
-					html += `<a href="${photo.url}" data-pswp-uid="${index + 1}" class="photo-link">
-                                <img src="${photo.url}" loading="lazy" alt="${photo.filename}">
+			if (data.media && data.media.length > 0) {
+				data.media.forEach((item, index) => {
+					const thumbnailUrl = item.thumbnailUrl || 'https://via.placeholder.com/400x300.png?text=Brak+miniatury'
+
+					if (item.type === 'video') {
+						const videoUrl = `${API_BASE_URL}/api/${GALLERY_ID}/video/${item.id}`
+						html += `
+                            <a href="${videoUrl}" class="video-link" data-video='{"source": [{"src":"${videoUrl}", "type":"video/mp4"}], "attributes": {"preload": false, "controls": true}}'>
+                                <img src="${thumbnailUrl}" loading="lazy" alt="${item.filename}">
+                                <div class="play-icon"></div>
                             </a>`
-					photoSwipeItems.push({
-						src: `${photo.url}=d`,
-						w: parseInt(photo.width, 10),
-						h: parseInt(photo.height, 10),
-					})
+					} else {
+						// 'image'
+						const imageUrl = `${API_BASE_URL}/api/${GALLERY_ID}/image/${item.id}`
+						html += `
+                            <a href="${imageUrl}" data-pswp-uid="${index + 1}" class="photo-link">
+                                <img src="${thumbnailUrl}" loading="lazy" alt="${item.filename}">
+                            </a>`
+						photoSwipeItems.push({
+							src: imageUrl,
+							w: parseInt(item.width, 10),
+							h: parseInt(item.height, 10),
+						})
+					}
 				})
 			} else {
-				html = '<p>W tym albumie nie ma żadnych zdjęć.</p>'
+				html = '<p>W tym albumie nie ma żadnych zdjęć ani filmów.</p>'
 			}
 
 			galleryContainer.innerHTML = html
-			galleryContainer.classList.add('gallery-photos')
-			galleryContainer.classList.remove('gallery-albums')
 
-			// Używamy imagesLoaded, aby mieć pewność, że Masonry zadziała na w pełni wczytanych obrazkach
 			imagesLoaded(galleryContainer, function () {
-				// Tworzymy i wstawiamy przycisk "Powrót"
 				const pWrapper = document.createElement('p')
 				pWrapper.className = 'back-button-wrapper'
 				const newButton = document.createElement('button')
@@ -147,26 +159,83 @@ function loadPhotos(albumId) {
 				pWrapper.appendChild(newButton)
 				galleryContainer.parentNode.insertBefore(pWrapper, galleryContainer)
 
-				// Inicjujemy Masonry
 				msnry = new Masonry(galleryContainer, {
-					itemSelector: '.photo-link',
-					columnWidth: '.photo-link',
+					itemSelector: '.photo-link, .video-link', // Obsługujemy oba typy
+					columnWidth: '.photo-link, .video-link',
 					gutter: 10,
 					percentPosition: true,
 				})
 
-				// Finalizujemy ładowanie
+				// Zamiast lightGallery, użyj prostego modala dla filmów
+				document.querySelectorAll('.video-link').forEach(link => {
+					link.addEventListener('click', function (e) {
+						e.preventDefault()
+						const videoUrl = this.getAttribute('href')
+
+						// Utwórz modal z odtwarzaczem
+						const modal = document.createElement('div')
+						modal.style.cssText = `
+							position: fixed;
+							top: 0;
+							left: 0;
+							width: 100%;
+							height: 100%;
+							background: rgba(0,0,0,0.9);
+							z-index: 9999;
+							display: flex;
+							align-items: center;
+							justify-content: center;
+							padding: 20px;
+							box-sizing: border-box;
+						`
+
+						modal.innerHTML = `
+							<div style="position: relative; width: 100%; max-width: 800px;">
+								<video controls autoplay style="width: 100%; height: auto; max-height: 80vh;">
+									<source src="${videoUrl}" type="video/mp4">
+									Twoja przeglądarka nie obsługuje odtwarzania wideo.
+								</video>
+								<button onclick="this.closest('div').remove()" style="
+									position: absolute;
+									top: -40px;
+									right: 0;
+									background: white;
+									border: none;
+									font-size: 24px;
+									width: 30px;
+									height: 30px;
+									border-radius: 50%;
+									cursor: pointer;
+								">×</button>
+							</div>
+						`
+
+						// Zamknij modal po kliknięciu w tło
+						modal.addEventListener('click', function (e) {
+							if (e.target === modal) {
+								modal.remove()
+							}
+						})
+
+						document.body.appendChild(modal)
+					})
+				})
+
 				document.getElementById('spinner').style.display = 'none'
 				galleryContainer.classList.remove('is-loading')
 				isGalleryLoading = false
 			})
 
-			// Inicjalizacja PhotoSwipe dla każdego linku
+			// Inicjalizacja PhotoSwipe TYLKO dla zdjęć
 			document.querySelectorAll('.photo-link').forEach((link, index) => {
 				link.addEventListener('click', function (e) {
 					e.preventDefault()
+					// Musimy znaleźć prawidłowy index w okrojonej tablicy photoSwipeItems
+					const clickedUrl = e.currentTarget.getAttribute('href')
+					const photoSwipeIndex = photoSwipeItems.findIndex(item => item.src === clickedUrl)
+
 					let pswpElement = document.querySelectorAll('.pswp')[0]
-					let options = { index: index }
+					let options = { index: photoSwipeIndex }
 					let gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, photoSwipeItems, options)
 					gallery.init()
 				})
