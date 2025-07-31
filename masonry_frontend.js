@@ -6,18 +6,16 @@
 // Zmieniaj tylko te 3 wartości w zależności od strony, na której wdrażasz galerię.
 
 // ID tej konkretnej galerii (z pliku galleries.config.json na serwerze)
-const GALLERY_ID = 'parafia'
-
-const API_BASE_URL = 'http://localhost:3010'
+const GALLERY_ID = 'kultura'
 
 // Adres URL Twojego serwera API
-//const API_BASE_URL = 'https://galeria-api.nautil2.hekko24.pl'
+const API_BASE_URL = 'https://galeria-api.nautil2.hekko24.pl'
 
 // Ustaw na `true`, aby pokazać daty w tytułach, lub `false`, aby je ukryć
 const SHOW_DATES_IN_ALBUM_TITLES = true
 
 // default lub large-tiles
-const GALLERY_LAYOUT_STYLE = 'large-tiles'
+const GALLERY_LAYOUT_STYLE = 'default'
 // ==========================================================
 
 // --- Zmienne stanu aplikacji (nie ruszaj) ---
@@ -148,6 +146,10 @@ function loadPhotos(albumId) {
 			}
 
 			galleryContainer.innerHTML = html
+			
+			// Dodaj klasę gallery-photos dla właściwego stylowania zdjęć
+			galleryContainer.classList.add('gallery-photos')
+			galleryContainer.classList.remove('gallery-albums')
 
 			imagesLoaded(galleryContainer, function () {
 				const pWrapper = document.createElement('p')
