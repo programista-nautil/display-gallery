@@ -135,6 +135,19 @@ app.get('/api/:galleryId/folders', loadGalleryConfig, async (req, res) => {
 	}
 })
 
+/**
+ * Wyciąga numer w nawiasie z nazwy pliku.
+ * @param {string} filename - Nazwa pliku, np. "Zdjęcie (12).jpg"
+ * @returns {number|null} - Zwraca liczbę lub null, jeśli nie znaleziono.
+ */
+function extractNumberFromFilename(filename) {
+	const match = filename.match(/\((\d+)\)/)
+	if (match && match[1]) {
+		return parseInt(match[1], 10)
+	}
+	return null
+}
+
 app.get('/api/:galleryId/folder/:folderId', loadGalleryConfig, async (req, res) => {
 	const { folderId } = req.params
 	const { name: galleryName } = req.galleryConfig
@@ -162,6 +175,26 @@ app.get('/api/:galleryId/folder/:folderId', loadGalleryConfig, async (req, res) 
 					height: file.imageMediaMetadata?.height || parseInt(file.videoMediaMetadata?.height, 10) || 720,
 				}
 			})
+
+		media.sort((a, b) => {
+			const numA = extractNumberFromFilename(a.filename)
+			const numB = extractNumberFromFilename(b.filename)
+
+			// Scenariusz 1: Oba pliki mają numer w nazwie
+			if (numA !== null && numB !== null) {
+				return numA - numB // Sortuj numerycznie rosnąco
+			}
+			// Scenariusz 2: Tylko plik 'a' ma numer -> idzie na początek
+			if (numA !== null) {
+				return -1
+			}
+			// Scenariusz 3: Tylko plik 'b' ma numer -> idzie na początek
+			if (numB !== null) {
+				return 1
+			}
+			// Scenariusz 4: Żaden plik nie ma numeru -> sortuj alfabetycznie
+			return a.filename.localeCompare(b.filename)
+		})
 
 		log('info', `[${galleryName}] Pomyślnie pobrano i przetworzono ${media.length} mediów. Wysyłam odpowiedź.`)
 		res.json({ media }) // Zmieniamy nazwę na "media" dla jasności
