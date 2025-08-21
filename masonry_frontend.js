@@ -146,7 +146,7 @@ function loadPhotos(albumId) {
 			}
 
 			galleryContainer.innerHTML = html
-			
+
 			// Dodaj klasę gallery-photos dla właściwego stylowania zdjęć
 			galleryContainer.classList.add('gallery-photos')
 			galleryContainer.classList.remove('gallery-albums')
@@ -166,7 +166,10 @@ function loadPhotos(albumId) {
 					columnWidth: '.photo-link, .video-link',
 					gutter: 10,
 					percentPosition: true,
+					transitionDuration: 0,
 				})
+
+				imagesLoaded(galleryContainer).on('progress', () => msnry.layout())
 
 				// Zamiast lightGallery, użyj prostego modala dla filmów
 				document.querySelectorAll('.video-link').forEach(link => {
