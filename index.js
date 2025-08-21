@@ -192,8 +192,7 @@ app.get('/api/:galleryId/folder/:folderId', loadGalleryConfig, async (req, res) 
 			if (numB !== null) {
 				return 1
 			}
-			// Scenariusz 4: Żaden plik nie ma numeru -> sortuj alfabetycznie
-			return a.filename.localeCompare(b.filename)
+			return 0
 		})
 
 		log('info', `[${galleryName}] Pomyślnie pobrano i przetworzono ${media.length} mediów. Wysyłam odpowiedź.`)
