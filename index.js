@@ -162,7 +162,6 @@ app.get('/api/:galleryId/folder/:folderId', loadGalleryConfig, async (req, res) 
 					height: file.imageMediaMetadata?.height || parseInt(file.videoMediaMetadata?.height, 10) || 720,
 				}
 			})
-			.reverse()
 
 		log('info', `[${galleryName}] Pomyślnie pobrano i przetworzono ${media.length} mediów. Wysyłam odpowiedź.`)
 		res.json({ media }) // Zmieniamy nazwę na "media" dla jasności
