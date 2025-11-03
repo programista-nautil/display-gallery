@@ -192,7 +192,7 @@ app.get('/api/:galleryId/folder/:folderId', loadGalleryConfig, async (req, res) 
 			if (numB !== null) {
 				return 1
 			}
-			return 0
+			return a.filename.localeCompare(b.filename)
 		})
 
 		log('info', `[${galleryName}] Pomyślnie pobrano i przetworzono ${media.length} mediów. Wysyłam odpowiedź.`)
