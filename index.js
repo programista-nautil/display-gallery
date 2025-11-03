@@ -177,21 +177,32 @@ app.get('/api/:galleryId/folder/:folderId', loadGalleryConfig, async (req, res) 
 			})
 
 		media.sort((a, b) => {
-			const numA = extractNumberFromFilename(a.filename)
+			const isACover = a.filename.includes('_cover')
+			const isBCover = b.filename.includes('_cover')
+
+			// 1. Logika dla okładki (_cover)
+			if (isACover && !isBCover) {
+				return -1 // 'a' jest okładką, idzie na sam początek
+			}
+			if (!isACover && isBCover) {
+				return 1 // 'b' jest okładką, idzie na sam początek
+			}
+
+			// 2. Logika dla numerów w nawiasach (skoro żadne nie jest okładką)
+			const numA = extractNumberFromFilename(a.filename) // Pamiętaj, aby mieć tę funkcję w pliku
 			const numB = extractNumberFromFilename(b.filename)
 
-			// Scenariusz 1: Oba pliki mają numer w nazwie
 			if (numA !== null && numB !== null) {
-				return numA - numB // Sortuj numerycznie rosnąco
+				return numA - numB // Obie mają numery, sortuj numerycznie
 			}
-			// Scenariusz 2: Tylko plik 'a' ma numer -> idzie na początek
 			if (numA !== null) {
-				return -1
+				return -1 // Tylko 'a' ma numer, idzie przed 'b'
 			}
-			// Scenariusz 3: Tylko plik 'b' ma numer -> idzie na początek
 			if (numB !== null) {
-				return 1
+				return 1 // Tylko 'b' ma numer, idzie przed 'a'
 			}
+
+			// 3. Logika dla reszty (sortowanie alfabetyczne)
 			return a.filename.localeCompare(b.filename)
 		})
 
